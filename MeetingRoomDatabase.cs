@@ -76,10 +76,10 @@ namespace MeetingRoomDatabase
                     ListSalasUsuario fila = new ListSalasUsuario();
                     fila.ID = rdr.GetInt32(0);
                     fila.Sala = rdr.GetString(1);
-                    fila.FechaInicio = rdr.GetDateTime(2).Date.ToString();
+                    fila.FechaInicio = rdr.GetDateTime(2).Date.ToString("dd/MM/yyyy");
                     fila.HoraInicio = rdr.GetDateTime(2).ToShortTimeString();
-                    fila.FechaFinal = rdr.GetDateTime(3).Date.ToString();
-                    fila.FechaInicio = rdr.GetDateTime(4).ToShortTimeString();
+                    fila.FechaFinal = rdr.GetDateTime(3).Date.ToString("dd/MM/yyyy");
+                    fila.HoraFinal = rdr.GetDateTime(3).ToShortTimeString();
                     Lista.Add(fila);
                 }
 
@@ -145,27 +145,55 @@ namespace MeetingRoomDatabase
             }
         }
 
-        public void ReservarSala(string Sala, DateTime FechaInicio, DateTime FechaFinal)
+        public void ReservarSala(string Sala, DateTime FechaInicio, DateTime FechaFinal, string username)
         {
             try
             {
                 //Registrar la reservación de la sala en la base de datos
                 MySqlConnection Conn = new MySqlConnection(ConnectionString.ToString());
                 string MySqlStr = "INSERT INTO tblReserva(Sala_ID,InicioRenta,FinRenta,Activa, Usuario) " +
-                    "VALUES(@Sala, @FechaInicio, @FechaFinal, true, 'fpuente')";
+                    "VALUES(@Sala, @FechaInicio, @FechaFinal, true, @UserName)";
                 MySqlCommand cmd = new MySqlCommand(MySqlStr, Conn);
 
                 cmd.Parameters.AddWithValue("@Sala", Sala);
                 cmd.Parameters.AddWithValue("@FechaInicio", FechaInicio);
                 cmd.Parameters.AddWithValue("@FechaFinal", FechaFinal);
+                cmd.Parameters.AddWithValue("@UserName", username);
 
                 Conn.Open();
                 cmd.ExecuteNonQuery();
                 Conn.Close();
+
+                MessageBox.Show("La Sala fue reservada exitosamente");
+
             }
             catch(MySqlException ex)
             {
                 MessageBox.Show("Ha ocurrido el error " + ex.Number);
+            }
+        }
+
+        public void CancelarReserva(int reservaID)
+        {
+            try
+            {
+                //Cancela la reserva con el ID
+                MySqlConnection Conn = new MySqlConnection(ConnectionString.ToString());
+                string MySqlStr = "UPDATE tblReserva r Set r.Activa = 0 Where r.Reserva_ID = @reservaID";
+                MySqlCommand cmd = new MySqlCommand(MySqlStr, Conn);
+
+                cmd.Parameters.AddWithValue("@reservaID", reservaID);
+
+                Conn.Open();
+                cmd.ExecuteNonQuery();
+                Conn.Close();
+
+                MessageBox.Show("Reserva de sala cancelada");
+
+            }
+            catch(MySqlException ex)
+            {
+                MessageBox.Show("Ocurrió el error: " + ex.Number);
             }
         }
 
@@ -188,21 +216,26 @@ namespace MeetingRoomDatabase
                 {
                     Resultado = true;
                 }
-                if (FechaFinal > sqldr.GetDateTime(0) && FechaFinal <= sqldr.GetDateTime(1))
+                else if (FechaFinal > sqldr.GetDateTime(0) && FechaFinal <= sqldr.GetDateTime(1))
                 {
                     Resultado = true;
                 }
-                if (sqldr.GetDateTime(0) >= FechaInicio && sqldr.GetDateTime(0) < FechaFinal)
+                else if (sqldr.GetDateTime(0) >= FechaInicio && sqldr.GetDateTime(0) < FechaFinal)
                 {
                     Resultado = true;
                 }
-                if (sqldr.GetDateTime(1) > FechaInicio && sqldr.GetDateTime(1) <= FechaFinal)
+                else if (sqldr.GetDateTime(1) > FechaInicio && sqldr.GetDateTime(1) <= FechaFinal)
                 {
                     Resultado = true;
                 }
             }
 
             Conn.Close();
+
+            if(Resultado == true)
+            {
+                MessageBox.Show("Esta reserva causa conflicto con otra. No fue posible reservar la sala");
+            }
 
             return Resultado;
         }

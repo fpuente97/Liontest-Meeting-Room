@@ -27,4 +27,5 @@ namespace MeetingRoomLista
         public string FechaFinal { get; set; }
         public string HoraFinal { get; set; }
     }
+
 }

@@ -13,7 +13,7 @@ namespace Liontest_Meeting_Room
 {
     public partial class revForm : Form
     {
-        public revForm()
+        public revForm(string userName)
         {
             InitializeComponent();
             SetcmbSalas();
@@ -23,7 +23,10 @@ namespace Liontest_Meeting_Room
             dtFecha.Value = CurrentTime.Date;
             CargarHoras(CurrentTime);
 
+            this.username = userName;
+
         }
+        public string username { get; set; }
 
         public MeetingDatabase room = new MeetingDatabase();
 
@@ -57,7 +60,7 @@ namespace Liontest_Meeting_Room
 
             if(room.SalaYaReservada(cmbSalas.SelectedValue.ToString(), FechaInicio, FechaFinal) == false) //Buscamos que la reserva no tenga conflicto con alguna otra
             {
-                room.ReservarSala(cmbSalas.SelectedValue.ToString(), FechaInicio, FechaFinal); //Se almacena en Base de Datos
+                room.ReservarSala(cmbSalas.SelectedValue.ToString(), FechaInicio, FechaFinal, username); //Se almacena en Base de Datos
             }
             
 
@@ -93,9 +96,16 @@ namespace Liontest_Meeting_Room
             {
                 CargarHoras(Convert.ToDateTime(TiempoInicio.SelectedValue));
             }
-            catch
+            catch(Exception ex)
             {
-                //Invalida el error al cargar
+                if(ex.HResult == -2147467262)
+                {
+                    //Permitir que el programa siga
+                }
+                else
+                {
+                    MessageBox.Show(ex.Message);
+                }
             }
         }
     }
